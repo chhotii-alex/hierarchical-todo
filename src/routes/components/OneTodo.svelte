@@ -1,33 +1,53 @@
 
-<script context="module" >
-</script>
-
 <script>
 
-   export let todo;
-   export let key;
+   import * as todos from '../todos.js';
    import Todos from './Todos.svelte';
+
+   export let name;
+   export let completed;
+   export let expanded;
+   export let children;
+
+   export let update = () => {};
+
+   function expand() {
+     expanded = true;
+     children = todos.expandAll(children);
+   }
+
+   function collapse() {
+      expanded = false;
+      children = todos.collapseAll(children);
+   }
+
+   $: hasExpandedChildren = todos.hasExpandedItems(children);
+   $: hasExpandedItems = (expanded || hasExpandedChildren );
+   $: hasCollapsedChildren = todos.hasCollapsedItems(children);
+   $: hasCollapsedItems = (!expanded || hasCollapsedChildren );
+
+   $: update(hasExpandedItems, hasCollapsedItems);
 
 </script>
 
-  <details class="todo" bind:open={todo.expanded}  >
+  <details class="todo" bind:open={expanded}  >
        <summary>
-           {todo.name}
-           <details class="inline indented" >
-                <summary> --- </summary>
-                <input bind:value={todo.name} />
-               <input type="checkbox"
-                  id="todo-{key}-{todo.id}"
-                  bind:checked={todo.completed}  />
-               {#if todo.completed}
-                   <button type="button" on:click={() => removeTodo(todo)} >
-                     Delete
-                   </button>
-               {/if}
-           </details>
-        </summary>
+           {name}
+                    {#if hasCollapsedItems }
+                        <button on:click={ () => expand() } >
+                           Expand All Children   
+                        </button>
+                    {/if}
+                    {#if hasExpandedItems }
+                       <button on:click={ () => collapse() } >
+                          Collapse All Children
+                       </button>
+                    {/if}
+                    </summary>
+                    <input bind:value={name} />
+                    <input type=checkbox bind:checked={completed} />
         <div class="boxed" >
-                     <Todos key={`${key}_${todo.id}`} />
+                     <Todos bind:data={children} />
         </div>
   </details>
 

@@ -1,42 +1,35 @@
 <script>
 
-   import { createData } from '../store.js';
-   import OneTodo from './OneTodo.svelte';
+    import * as todos from '../todos.js';
+    import OneTodo from './OneTodo.svelte';
 
-   export let key;
+    export let data;
 
-  const todos = createData([], key);
-
-  $: totalTodos = todos.length;
-
-function removeTodo(todo) {
-  todos.remove(todo);
-}
-
-let newTodoId
-  $: {
-    if (totalTodos === 0) {
-      newTodoId = 1;
-    } else {
-      newTodoId = Math.max(...$todos.map((t) => t.id)) + 1;
+    function addTodo() {
+        todos.addNewItem(data);
+        data = data;
     }
-  }
+    function removeTodo(todo) {
+       todos.removeItemFromList(todo, data);
+       data = data;
+    }
 
-function addTodo() {
-  let newItem = {
-      id: newTodoId,
-      name: "",
-      completed: false,
-      expanded: false,
-  };
-  todos.append(newItem);
-}
+    function childDidUpdate() {
+       data = data;
+    }
 
 </script>
 
 <div>
-{#each $todos as todo, index (todo.id)}
-   <OneTodo {todo} {key} />
+{#each data as todo, index (todo.id)}
+   <OneTodo bind:name={todo.name} bind:completed={todo.completed}
+              bind:expanded={todo.expanded} bind:children={todo.children}
+              update={childDidUpdate} />
+   {#if todo.completed}
+                   <button type="button" on:click={() => removeTodo(todo)} >
+                     Delete
+                   </button>
+   {/if}
 {/each}
 </div>
 
