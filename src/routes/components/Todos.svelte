@@ -14,6 +14,11 @@
        data = data;
     }
 
+    let hasExpandedItems;
+    let hasCollapsedItems;
+
+    $: childDidUpdate(hasExpandedItems, hasCollapsedItems);
+
     function childDidUpdate() {
        data = data;
     }
@@ -24,7 +29,8 @@
 {#each data as todo, index (todo.id)}
    <OneTodo bind:name={todo.name} bind:completed={todo.completed}
               bind:expanded={todo.expanded} bind:children={todo.children}
-              update={childDidUpdate} />
+              bind:hasExpandedItems={hasExpandedItems}
+              bind:hasCollapsedItems={hasCollapsedItems} />
    {#if todo.completed}
                    <button type="button" on:click={() => removeTodo(todo)} >
                      Delete

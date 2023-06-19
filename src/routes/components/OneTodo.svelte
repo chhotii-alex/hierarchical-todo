@@ -9,7 +9,8 @@
    export let expanded;
    export let children;
 
-   export let update = () => {};
+   export let hasExpandedItems;
+   export let hasCollapsedItems;
 
    function expand() {
      expanded = true;
@@ -25,8 +26,6 @@
    $: hasExpandedItems = (expanded || hasExpandedChildren );
    $: hasCollapsedChildren = todos.hasCollapsedItems(children);
    $: hasCollapsedItems = (!expanded || hasCollapsedChildren );
-
-   $: update(hasExpandedItems, hasCollapsedItems);
 
 </script>
 
