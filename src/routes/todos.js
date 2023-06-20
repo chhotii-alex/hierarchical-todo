@@ -6,13 +6,12 @@ export function createNewList() {
 }
 
 export function createNewItem(newTodoId) {
-  return {
-      id: newTodoId,
-      name: "",
-      completed: false,
-      expanded: false,
-      children: createNewList(),
-  };
+    return {
+        id: newTodoId,
+        name: "",
+        expanded: true,
+        children: createNewList(),
+    };
 }
 
 export function addItemToList(item, theList) {
@@ -45,7 +44,7 @@ export function removeChild(child, parent) {
 }
 
 export function maxIdForList(theList) {
-    let ids = theList.map( t => maxIdForItem(t) );
+    let ids = theList.map(t => maxIdForItem(t));
     return Math.max(...ids, 0);
 }
 
@@ -96,7 +95,7 @@ function hasChildrenWithExpandedState(item, flag) {
 
 export function hasCollapsedItems(theList) {
     return hasItemsWithExpandedState(theList, false);
-}        
+}
 
 export function hasExpandedItems(theList) {
     return hasItemsWithExpandedState(theList, true);
