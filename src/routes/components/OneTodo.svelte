@@ -4,22 +4,23 @@
 
 <script>
   import { createEventDispatcher } from "svelte";
-  import { tick } from 'svelte';
-  import { onMount } from 'svelte';
+  import { tick } from "svelte";
+  import { onMount } from "svelte";
 
   import * as todos from "../todos.js";
-  import { currentEditID } from '../stores.js'; 
+  import { currentEditID, parentTop } from './stores.js';
   import Todos from "./Todos.svelte";
 
   export let id;
   export let name;
   export let expanded;
   export let children;
+  export let deleteFunc;
 
   onMount(() => {
-		nameInputs.set(id, nameInput);
-		return () => nameInputs.delete(id);
-	});
+    nameInputs.set(id, nameInput);
+    return () => nameInputs.delete(id);
+  });
 
   const dispatch = createEventDispatcher();
 
@@ -78,26 +79,39 @@
     $currentEditID = id;
     await editableGrabFocus();
   }
-
 </script>
 
-<details class="todo" bind:open={expanded}>
-  <summary on:keyup={(e) => {e.preventDefault()}}>
-      <input class:invisible="{$currentEditID != id}" size="80" bind:value={name} bind:this={nameInput} />
-      <button class:invisible="{$currentEditID == id}" class="plain" on:click={startEditing}>
-        {#if name.length}
-          {name}
-        {:else}
-           ---
-        {/if}
+<details class="todo inline" bind:open={expanded}>
+  <summary
+    on:keyup={(e) => {
+      e.preventDefault();
+    }}
+  >
+    <input
+      class:nondisplay={$currentEditID != id}
+      size="80"
+      bind:value={name}
+      bind:this={nameInput}
+    />
+    <button
+      class:nondisplay={$currentEditID == id}
+      class="plain"
+      on:click={startEditing}
+    >
+      {#if name.length}
+        {name}
+      {:else}
+        ---
+      {/if}
+    </button>
+    <span class="right_edge">
+      <button class:invisible={!hasCollapsedItems} on:click={() => expand()}> VVV </button>
+      <button class:invisible={!hasExpandedItems} on:click={() => collapse()}> &gt;&gt;&gt; </button>
+      <button on:click={() => addChild()}>+</button>
+      <button class:invisible={children.length > 0} type="button" on:click={() => deleteFunc(id)}>
+        X
       </button>
-    {#if hasCollapsedItems}
-      <button on:click={() => expand()}> Expand All Subtasks </button>
-    {/if}
-    {#if hasExpandedItems}
-      <button on:click={() => collapse()}> Collapse All Subtasks </button>
-    {/if}
-    <button on:click={() => addChild()}>Add Subtask</button>
+    </span>
   </summary>
   {#if children.length > 0}
     <div class="boxed">
@@ -111,6 +125,9 @@
 </details>
 
 <style>
+  .todo {
+    width: 100%;
+  }
   .inline {
     display: inline-block;
   }
@@ -120,10 +137,13 @@
   }
 
   div.boxed {
-    border: 3px solid gray;
+    border-left: 0.5px solid lightgray;
+    border-top: 0.5px solid lightgray;
     margin: 0.5em;
     margin-left: 1em;
+    margin-right: 0;
     padding: 1em;
+    padding-right: 0;
   }
 
   button.plain {
@@ -132,6 +152,13 @@
   }
 
   .invisible {
+    visibility: hidden;
+  }
+  .nondisplay {
     display: none;
+  }
+
+  .right_edge {
+    float: right;
   }
 </style>

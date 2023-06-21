@@ -13,6 +13,11 @@
     data = data;
   }
 
+  function removeTodoWithId(id) {
+    let todo = data.find(el => el.id == id);
+    removeTodo(todo);
+  }
+
   function descendentDidExpand(event) {
     dispatch("descendentDidExpand");
   }
@@ -23,18 +28,18 @@
 </script>
 
 <div>
-  {#each data as todo, index (todo.id)}
-    <OneTodo
-      id={todo.id}
-      bind:name={todo.name}
-      bind:expanded={todo.expanded}
-      bind:children={todo.children}
-      on:descendentDidExpand={descendentDidExpand}
-      on:descendentDidCollapse={descendentDidCollapse}
-    />
-    {#if todo.children.length < 1}
-      <button type="button" on:click={() => removeTodo(todo)}> Delete </button>
-    {/if}
+  {#each data as todo (todo.id)}
+    <div>
+      <OneTodo
+        id={todo.id}
+        bind:name={todo.name}
+        bind:expanded={todo.expanded}
+        bind:children={todo.children}
+        deleteFunc={removeTodoWithId}
+        on:descendentDidExpand={descendentDidExpand}
+        on:descendentDidCollapse={descendentDidCollapse}
+      />
+    </div>
   {/each}
 </div>
 
