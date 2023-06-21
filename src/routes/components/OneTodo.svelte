@@ -81,7 +81,7 @@
   }
 
   function update() {
-    dispatch('update')
+    dispatch("update");
   }
 
   $: {
@@ -93,6 +93,13 @@
 
 <div class="todo" class:parent-top={$parentTop} class:child-top={!$parentTop}>
   <div class="top">
+    <button on:click={() => (expanded = !expanded)}>
+      {#if expanded}
+        V
+      {:else}
+        &gt;
+      {/if}
+    </button>
     <input
       class:nondisplay={$currentEditID != id}
       size="80"
