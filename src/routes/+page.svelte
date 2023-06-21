@@ -1,9 +1,9 @@
 <script>
     import OneTodo from "./components/OneTodo.svelte";
-    import { createNewList } from "./todos.js";
+    import { createNewItem } from "./todos.js";
     import { parentTop } from './stores.js';
 
-    let data = createNewList();
+    let data = createNewItem();
 
     function update() {
         console.log(JSON.stringify(data));
@@ -12,7 +12,7 @@
 
 <input type="checkbox" bind:checked={$parentTop} id="parentTopCheck"/>
 <label for="parentTopCheck">Subtasks list below task</label>
-<OneTodo name="A List" expanded={true} id={0} bind:children={data} 
+<OneTodo bind:name={data.name} bind:expanded={data.expanded} id={data.id} bind:children={data.children} 
         on:update={update}
 
 />
