@@ -56,16 +56,14 @@
   $: hasCollapsedChildren = todos.hasCollapsedItems(children);
 
   $: {
-    let oldHasExpandedItems = hasExpandedItems;
-    let oldHasCollapsedItems = hasCollapsedItems;
     hasExpandedItems = (expanded && children.length) || hasExpandedChildren;
     hasCollapsedItems = (!expanded && children.length) || hasCollapsedChildren;
     console.log(`${name} reactive`);
-    if (hasExpandedItems && !oldHasExpandedItems) {
+    if (hasExpandedItems) {
       console.log(`${name} dispatching descendentDidExpand`);
       dispatch("descendentDidExpand");
     }
-    if (hasCollapsedItems && !oldHasCollapsedItems) {
+    if (hasCollapsedItems) {
       console.log(`${name} dispatching descendentDidCollapse`);
       dispatch("descendentDidCollapse");
     }
