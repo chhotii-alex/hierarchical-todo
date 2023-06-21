@@ -42,13 +42,14 @@
   }
 
   function expand() {
+    console.log(`${name} doing expand`);
     expanded = true;
-    children = todos.expandAll(children);
+    todos.expandAll(children);
   }
 
   function collapse() {
     expanded = false;
-    children = todos.collapseAll(children);
+    todos.collapseAll(children);
   }
 
   $: hasExpandedChildren = todos.hasExpandedItems(children);
@@ -59,19 +60,24 @@
     let oldHasCollapsedItems = hasCollapsedItems;
     hasExpandedItems = (expanded && children.length) || hasExpandedChildren;
     hasCollapsedItems = (!expanded && children.length) || hasCollapsedChildren;
+    console.log(`${name} reactive`);
     if (hasExpandedItems && !oldHasExpandedItems) {
+      console.log(`${name} dispatching descendentDidExpand`);
       dispatch("descendentDidExpand");
     }
     if (hasCollapsedItems && !oldHasCollapsedItems) {
+      console.log(`${name} dispatching descendentDidCollapse`);
       dispatch("descendentDidCollapse");
     }
   }
 
   function descendentDidExpand(event) {
+    console.log(`${name} doing descendentDidExpand`)
     hasExpandedChildren = true;
   }
 
   function descendentDidCollapse(event) {
+    console.log(`${name} doing descendentDidCollapse`)
     hasCollapsedChildren = true;
   }
 
