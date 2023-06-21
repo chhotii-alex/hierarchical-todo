@@ -1,5 +1,11 @@
+<script context="module">
+  const nameInputs = new Map();
+</script>
+
 <script>
   import { createEventDispatcher } from "svelte";
+  import { tick } from 'svelte';
+  import { onMount } from 'svelte';
 
   import * as todos from "../todos.js";
   import { currentEditID } from '../stores.js'; 
@@ -10,15 +16,28 @@
   export let expanded;
   export let children;
 
+  onMount(() => {
+		nameInputs.set(id, nameInput);
+		return () => nameInputs.delete(id);
+	});
+
   const dispatch = createEventDispatcher();
 
   let hasExpandedItems;
   let hasCollapsedItems;
 
-  function addChild() {
+  let nameInput;
+
+  async function addChild() {
     $currentEditID = todos.addNewItem(children);
     expanded = true;
     children = children;
+    await editableGrabFocus();
+  }
+
+  async function editableGrabFocus() {
+    await tick();
+    nameInputs.get($currentEditID).focus();
   }
 
   function expand() {
@@ -55,21 +74,23 @@
     hasCollapsedChildren = true;
   }
 
+  async function startEditing() {
+    $currentEditID = id;
+    await editableGrabFocus();
+  }
+
 </script>
 
 <details class="todo" bind:open={expanded}>
   <summary on:keyup={(e) => {e.preventDefault()}}>
-    {#if $currentEditID == id}
-      <input size="80" bind:value={name} />
-    {:else}
-      <button class="plain" on:click={() => $currentEditID = id}>
+      <input class:invisible="{$currentEditID != id}" size="80" bind:value={name} bind:this={nameInput} />
+      <button class:invisible="{$currentEditID == id}" class="plain" on:click={startEditing}>
         {#if name.length}
           {name}
         {:else}
            ---
         {/if}
       </button>
-    {/if}
     {#if hasCollapsedItems}
       <button on:click={() => expand()}> Expand All Subtasks </button>
     {/if}
@@ -108,5 +129,9 @@
   button.plain {
     border: none;
     background-color: inherit;
+  }
+
+  .invisible {
+    display: none;
   }
 </style>
