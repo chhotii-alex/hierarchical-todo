@@ -14,7 +14,7 @@
   }
 
   function removeTodoWithId(id) {
-    let todo = data.find(el => el.id == id);
+    let todo = data.find((el) => el.id == id);
     removeTodo(todo);
   }
 
@@ -25,6 +25,11 @@
   function descendentDidCollapse(event) {
     dispatch("descendentDidCollapse");
   }
+
+  function update() {
+    dispatch("update");
+  }
+
 </script>
 
 <div>
@@ -38,6 +43,7 @@
         deleteFunc={removeTodoWithId}
         on:descendentDidExpand={descendentDidExpand}
         on:descendentDidCollapse={descendentDidCollapse}
+        on:update={update}
       />
     </div>
   {/each}

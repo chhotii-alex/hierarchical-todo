@@ -8,14 +8,14 @@
   import { onMount } from "svelte";
 
   import * as todos from "../todos.js";
-  import { currentEditID, parentTop } from './stores.js';
+  import { currentEditID, parentTop } from "../stores.js";
   import Todos from "./Todos.svelte";
 
   export let id;
   export let name;
   export let expanded;
   export let children;
-  export let deleteFunc;
+  export let deleteFunc = () => {};
 
   onMount(() => {
     nameInputs.set(id, nameInput);
@@ -79,14 +79,20 @@
     $currentEditID = id;
     await editableGrabFocus();
   }
+
+  function update() {
+    dispatch('update')
+  }
+
+  $: {
+    name;
+    expanded;
+    dispatch("update");
+  }
 </script>
 
-<details class="todo inline" bind:open={expanded}>
-  <summary
-    on:keyup={(e) => {
-      e.preventDefault();
-    }}
-  >
+<div class="todo" class:parent-top={$parentTop} class:child-top={!$parentTop}>
+  <div class="top">
     <input
       class:nondisplay={$currentEditID != id}
       size="80"
@@ -105,28 +111,52 @@
       {/if}
     </button>
     <span class="right_edge">
-      <button class:invisible={!hasCollapsedItems} on:click={() => expand()}> VVV </button>
-      <button class:invisible={!hasExpandedItems} on:click={() => collapse()}> &gt;&gt;&gt; </button>
+      <button class:invisible={!hasCollapsedItems} on:click={() => expand()}>
+        VVV
+      </button>
+      <button class:invisible={!hasExpandedItems} on:click={() => collapse()}>
+        &gt;&gt;&gt;
+      </button>
       <button on:click={() => addChild()}>+</button>
-      <button class:invisible={children.length > 0} type="button" on:click={() => deleteFunc(id)}>
+      <button
+        class:invisible={children.length > 0}
+        type="button"
+        on:click={() => deleteFunc(id)}
+      >
         X
       </button>
     </span>
-  </summary>
-  {#if children.length > 0}
+  </div>
+  {#if children.length > 0 && expanded}
     <div class="boxed">
       <Todos
         bind:data={children}
         on:descendentDidExpand={descendentDidExpand}
         on:descendentDidCollapse={descendentDidCollapse}
+        on:update={update}
       />
     </div>
   {/if}
-</details>
+</div>
 
 <style>
   .todo {
     width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .parent-top {
+    grid-template-areas:
+      "top"
+      "boxed";
+  }
+  .child-top {
+    grid-template-areas:
+      "boxed"
+      "top";
+  }
+  .top {
+    grid-area: top;
   }
   .inline {
     display: inline-block;
@@ -144,6 +174,12 @@
     margin-right: 0;
     padding: 1em;
     padding-right: 0;
+    grid-area: boxed;
+  }
+
+  .parent-top > div.boxed {
+    border-bottom: 0.5px solid lightgray;
+    border-top: none;
   }
 
   button.plain {

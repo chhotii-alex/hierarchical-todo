@@ -5,7 +5,7 @@ export function createNewList() {
     return [];
 }
 
-export function createNewItem(newTodoId) {
+function createNewItemForId(newTodoId) {
     return {
         id: newTodoId,
         name: "",
@@ -18,11 +18,15 @@ export function addItemToList(item, theList) {
     theList.push(item);
 }
 
-export function addNewItem(theList) {
+export function createNewItem() {
     let newId = nextId++;
-    let newItem = createNewItem(newId);
+    return createNewItemForId(newId);
+}
+
+export function addNewItem(theList) {
+    let newItem = createNewItem()
     addItemToList(newItem, theList);
-    return newId;
+    return newItem.id;
 }
 
 export function addItemAsChild(child, parent) {
