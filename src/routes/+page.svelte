@@ -1,8 +1,8 @@
 <script>
     import OneTodo from "./components/OneTodo.svelte";
-    import { createNewList, expandAll, collapseAll } from "./todos.js";
+    import { createNewList } from "./todos.js";
 
     let data = createNewList();
 </script>
 
-<OneTodo name="A List" completed={false} expanded={true} bind:children={data} />
+<OneTodo name="A List" expanded={true} id={0} bind:children={data} />

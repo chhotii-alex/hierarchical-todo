@@ -22,6 +22,7 @@ export function addNewItem(theList) {
     let newId = nextId++;
     let newItem = createNewItem(newId);
     addItemToList(newItem, theList);
+    return newId;
 }
 
 export function addItemAsChild(child, parent) {
@@ -84,7 +85,7 @@ function hasItemsWithExpandedState(theList, flag) {
 }
 
 function hasChildrenWithExpandedState(item, flag) {
-    if (item.expanded == flag) {
+    if (item.expanded == flag && item.children.length) {
         return true;
     }
     if (hasItemsWithExpandedState(item.children, flag)) {

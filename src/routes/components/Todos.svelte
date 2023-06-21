@@ -25,6 +25,7 @@
 <div>
   {#each data as todo, index (todo.id)}
     <OneTodo
+      id={todo.id}
       bind:name={todo.name}
       bind:expanded={todo.expanded}
       bind:children={todo.children}
