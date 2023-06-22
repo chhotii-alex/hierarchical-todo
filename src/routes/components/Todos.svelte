@@ -18,12 +18,8 @@
     removeTodo(todo);
   }
 
-  function descendentDidExpand(event) {
-    dispatch("descendentDidExpand");
-  }
-
-  function descendentDidCollapse(event) {
-    dispatch("descendentDidCollapse");
+  function descendentExpandDelta(event) {
+    dispatch("descendentExpandDelta");
   }
 
   function update() {
@@ -38,16 +34,9 @@
       <OneTodo
         todo={todo}
         deleteFunc={removeTodoWithId}
-        on:descendentDidExpand={descendentDidExpand}
-        on:descendentDidCollapse={descendentDidCollapse}
+        on:descendentExpandDelta={descendentExpandDelta}
         on:update={update}
       />
     </div>
   {/each}
 </div>
-
-<style>
-  ul {
-    list-style: none;
-  }
-</style>

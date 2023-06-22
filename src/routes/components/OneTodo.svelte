@@ -62,30 +62,19 @@
 
   $: hasExpandedChildren = todos.hasExpandedItems(todo.children);
   $: hasCollapsedChildren = todos.hasCollapsedItems(todo.children);
+  $: expanded = todo.expanded;
+  $: hasChildren = todo.children.length > 0;
 
   $: {
-    hasExpandedItems = (todo.expanded && todo.children.length) || hasExpandedChildren;
-    hasCollapsedItems = (!todo.expanded && todo.children.length) || hasCollapsedChildren;
-    console.log(`${todo.name} reactive`);
-    if (hasExpandedItems) {
-      console.log(`${todo.name} dispatching descendentDidExpand`);
-      dispatch("descendentDidExpand");
-    }
-    if (hasCollapsedItems) {
-      console.log(`${todo.name} dispatching descendentDidCollapse`);
-      dispatch("descendentDidCollapse");
-    }
+    hasExpandedItems = (expanded && hasChildren) || hasExpandedChildren;
+    hasCollapsedItems = (!expanded && hasChildren) || hasCollapsedChildren;
+    console.log(`${todo.name} dispatching descendentExpandDelta`);
+    dispatch("descendentExpandDelta");
   }
 
-  function descendentDidExpand(event) {
-    console.log(`${todo.name} doing descendentDidExpand`)
-    hasExpandedChildren = true;
+  function descendentExpandDelta(event) {
+    console.log(`${todo.name} doing descendentExpandDelta`);
     hasCollapsedChildren = todos.hasCollapsedItems(todo.children);
-  }
-
-  function descendentDidCollapse(event) {
-    console.log(`${todo.name} doing descendentDidCollapse`)
-    hasCollapsedChildren = true;
     hasExpandedChildren = todos.hasExpandedItems(todo.children);
   }
 
@@ -93,18 +82,19 @@
     $currentEditID = todo.id;
     await editableGrabFocus();
   }
-
 </script>
 
 <div class="todo" class:parent-top={$parentTop} class:child-top={!$parentTop}>
   <div class="top">
-    <button on:click={() => (todo.expanded = !todo.expanded)}>
-      {#if todo.expanded}
-        V
-      {:else}
-        &gt;
-      {/if}
-    </button>
+    {#if hasChildren}
+      <button on:click={() => (todo.expanded = !todo.expanded)}>
+        {#if todo.expanded}
+          V
+        {:else}
+          &gt;
+        {/if}
+      </button>
+    {/if}
     <input
       class:nondisplay={$currentEditID != todo.id}
       size="80"
@@ -139,15 +129,13 @@
       </button>
     </span>
   </div>
-    <div class="boxed" class:nondisplay={todo.children.length == 0 || !todo.expanded}>
-      <Todos
-        bind:data={todo.children}
-        on:descendentDidExpand={descendentDidExpand}
-        on:descendentDidCollapse={descendentDidCollapse}
-        on:update={update}
-      />
-    </div>
-  
+  <div class="boxed" class:nondisplay={!hasChildren || !expanded}>
+    <Todos
+      bind:data={todo.children}
+      on:descendentExpandDelta={descendentExpandDelta}
+      on:update={update}
+    />
+  </div>
 </div>
 
 <style>
