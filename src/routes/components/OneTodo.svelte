@@ -27,7 +27,6 @@
 
   $: {
     todo;
-    console.log(`${todo.name} updated?`);
     dispatch("update");
   }
 
@@ -45,11 +44,13 @@
 
   async function editableGrabFocus() {
     await tick();
-    nameInputs.get($currentEditID).focus();
+    let input = nameInputs.get($currentEditID);
+    if (input) {
+      input.focus();
+    }
   }
 
   function expand() {
-    console.log(`${todo.name} doing expand`);
     todo.expanded = true;
     todos.expandAll(todo.children);
   }
@@ -67,12 +68,10 @@
   $: {
     hasExpandedItems = (expanded && hasChildren) || hasExpandedChildren;
     hasCollapsedItems = (!expanded && hasChildren) || hasCollapsedChildren;
-    console.log(`${todo.name} dispatching descendentExpandDelta`);
     dispatch("descendentExpandDelta");
   }
 
   function descendentExpandDelta(event) {
-    console.log(`${todo.name} doing descendentExpandDelta`);
     hasCollapsedChildren = todos.hasCollapsedItems(todo.children);
     hasExpandedChildren = todos.hasExpandedItems(todo.children);
   }
@@ -80,6 +79,22 @@
   async function startEditing() {
     $currentEditID = todo.id;
     await editableGrabFocus();
+  }
+
+  function checkForEnterKey(event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      event.target.blur();
+      endEditing();
+    }
+  }
+
+  async function endEditing() {
+    let input = nameInputs.get($currentEditID);
+    if (input) {
+      input.blur();
+    }
+    $currentEditID = -1;
   }
 
   function removeTodo(subtask) {
@@ -110,6 +125,7 @@
       size="80"
       bind:value={todo.name}
       bind:this={nameInput}
+      on:keypress={checkForEnterKey}
     />
     <button
       class:nondisplay={$currentEditID == todo.id}
@@ -122,6 +138,7 @@
         ---
       {/if}
     </button>
+    <sup>{todo.id}</sup>
     <span class="right_edge">
       <button class:invisible={!hasCollapsedItems} on:click={() => expand()}>
         VVV

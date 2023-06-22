@@ -1,6 +1,24 @@
 
 let nextId = 1;
 
+export function setNextIdFromData(item) {
+    nextId = biggestId(item) + 1;
+}
+
+function biggestId(item) {
+    let biggest = nextId;
+    if (item.id > biggest) {
+        biggest = item.id;
+    }
+    for (let i = 0; i < item.children.length; ++i) {
+        let anId = biggestId(item.children[i])
+        if (anId > biggest) {
+            biggest = anId;
+        }
+    }
+    return biggest;
+}
+
 export function createNewList() {
     return [];
 }
