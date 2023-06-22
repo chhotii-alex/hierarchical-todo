@@ -11,15 +11,12 @@
   import { currentEditID, parentTop } from "../stores.js";
   import Todos from "./Todos.svelte";
 
-  export let id;
-  export let name;
-  export let expanded;
-  export let children;
+  export let todo;
   export let deleteFunc = () => {};
 
   onMount(() => {
-    nameInputs.set(id, nameInput);
-    return () => nameInputs.delete(id);
+    nameInputs.set(todo.id, nameInput);
+    return () => nameInputs.delete(todo.id);
   });
 
   const dispatch = createEventDispatcher();
@@ -29,10 +26,21 @@
 
   let nameInput;
 
+  $: {
+    todo;
+    console.log(`${todo.name} updated?`);
+    dispatch("update");
+  }
+
+  function update() {
+    dispatch("update");
+  }
+
   async function addChild() {
-    $currentEditID = todos.addNewItem(children);
-    expanded = true;
-    children = children;
+    let newID = todos.addNewItem(todo.children);
+    $currentEditID = newID;
+    todo.expanded = true;
+    todo.children = todo.children;
     await editableGrabFocus();
   }
 
@@ -42,81 +50,74 @@
   }
 
   function expand() {
-    console.log(`${name} doing expand`);
-    expanded = true;
-    todos.expandAll(children);
+    console.log(`${todo.name} doing expand`);
+    todo.expanded = true;
+    todos.expandAll(todo.children);
   }
 
   function collapse() {
-    expanded = false;
-    todos.collapseAll(children);
+    todo.expanded = false;
+    todos.collapseAll(todo.children);
   }
 
-  $: hasExpandedChildren = todos.hasExpandedItems(children);
-  $: hasCollapsedChildren = todos.hasCollapsedItems(children);
+  $: hasExpandedChildren = todos.hasExpandedItems(todo.children);
+  $: hasCollapsedChildren = todos.hasCollapsedItems(todo.children);
 
   $: {
-    hasExpandedItems = (expanded && children.length) || hasExpandedChildren;
-    hasCollapsedItems = (!expanded && children.length) || hasCollapsedChildren;
-    console.log(`${name} reactive`);
+    hasExpandedItems = (todo.expanded && todo.children.length) || hasExpandedChildren;
+    hasCollapsedItems = (!todo.expanded && todo.children.length) || hasCollapsedChildren;
+    console.log(`${todo.name} reactive`);
     if (hasExpandedItems) {
-      console.log(`${name} dispatching descendentDidExpand`);
+      console.log(`${todo.name} dispatching descendentDidExpand`);
       dispatch("descendentDidExpand");
     }
     if (hasCollapsedItems) {
-      console.log(`${name} dispatching descendentDidCollapse`);
+      console.log(`${todo.name} dispatching descendentDidCollapse`);
       dispatch("descendentDidCollapse");
     }
   }
 
   function descendentDidExpand(event) {
-    console.log(`${name} doing descendentDidExpand`)
+    console.log(`${todo.name} doing descendentDidExpand`)
     hasExpandedChildren = true;
+    hasCollapsedChildren = todos.hasCollapsedItems(todo.children);
   }
 
   function descendentDidCollapse(event) {
-    console.log(`${name} doing descendentDidCollapse`)
+    console.log(`${todo.name} doing descendentDidCollapse`)
     hasCollapsedChildren = true;
+    hasExpandedChildren = todos.hasExpandedItems(todo.children);
   }
 
   async function startEditing() {
-    $currentEditID = id;
+    $currentEditID = todo.id;
     await editableGrabFocus();
   }
 
-  function update() {
-    dispatch("update");
-  }
-
-  $: {
-    name;
-    expanded;
-    dispatch("update");
-  }
 </script>
 
 <div class="todo" class:parent-top={$parentTop} class:child-top={!$parentTop}>
   <div class="top">
-    <button on:click={() => (expanded = !expanded)}>
-      {#if expanded}
+    <button on:click={() => (todo.expanded = !todo.expanded)}>
+      {#if todo.expanded}
         V
       {:else}
         &gt;
       {/if}
     </button>
     <input
-      class:nondisplay={$currentEditID != id}
+      class:nondisplay={$currentEditID != todo.id}
       size="80"
-      bind:value={name}
+      bind:value={todo.name}
       bind:this={nameInput}
     />
     <button
-      class:nondisplay={$currentEditID == id}
+      class:nondisplay={$currentEditID == todo.id}
       class="plain"
       on:click={startEditing}
     >
-      {#if name.length}
-        {name}
+      {#if todo.name.length}
+        {todo.name}
       {:else}
         ---
       {/if}
@@ -130,24 +131,23 @@
       </button>
       <button on:click={() => addChild()}>+</button>
       <button
-        class:invisible={children.length > 0}
+        class:invisible={todo.children.length > 0}
         type="button"
-        on:click={() => deleteFunc(id)}
+        on:click={() => deleteFunc(todo.id)}
       >
         X
       </button>
     </span>
   </div>
-  {#if children.length > 0 && expanded}
-    <div class="boxed">
+    <div class="boxed" class:nondisplay={todo.children.length == 0 || !todo.expanded}>
       <Todos
-        bind:data={children}
+        bind:data={todo.children}
         on:descendentDidExpand={descendentDidExpand}
         on:descendentDidCollapse={descendentDidCollapse}
         on:update={update}
       />
     </div>
-  {/if}
+  
 </div>
 
 <style>

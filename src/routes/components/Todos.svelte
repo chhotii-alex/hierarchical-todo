@@ -36,10 +36,7 @@
   {#each data as todo (todo.id)}
     <div>
       <OneTodo
-        id={todo.id}
-        bind:name={todo.name}
-        bind:expanded={todo.expanded}
-        bind:children={todo.children}
+        todo={todo}
         deleteFunc={removeTodoWithId}
         on:descendentDidExpand={descendentDidExpand}
         on:descendentDidCollapse={descendentDidCollapse}
