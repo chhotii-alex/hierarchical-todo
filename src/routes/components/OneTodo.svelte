@@ -9,7 +9,6 @@
 
   import * as todos from "../todos.js";
   import { currentEditID, parentTop } from "../stores.js";
-  import Todos from "./Todos.svelte";
 
   export let todo;
   export let deleteFunc = () => {};
@@ -82,6 +81,17 @@
     $currentEditID = todo.id;
     await editableGrabFocus();
   }
+
+  function removeTodo(subtask) {
+    todos.removeItemFromList(subtask, todo.children);
+    todo.children = todo.children;
+  }
+
+  function removeTodoWithId(id) {
+    let subtask = todo.children.find((el) => el.id == id);
+    removeTodo(subtask);
+  }
+
 </script>
 
 <div class="todo" class:parent-top={$parentTop} class:child-top={!$parentTop}>
@@ -130,11 +140,18 @@
     </span>
   </div>
   <div class="boxed" class:nondisplay={!hasChildren || !expanded}>
-    <Todos
-      bind:data={todo.children}
-      on:descendentExpandDelta={descendentExpandDelta}
-      on:update={update}
-    />
+    <div>
+      {#each todo.children as subtask (subtask.id)}
+        <div>
+          <svelte:self
+            todo={subtask}
+            deleteFunc={removeTodoWithId}
+            on:descendentExpandDelta={descendentExpandDelta}
+            on:update={update}
+          />
+        </div>
+      {/each}
+    </div>
   </div>
 </div>
 
