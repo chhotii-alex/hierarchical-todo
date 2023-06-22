@@ -12,7 +12,7 @@
 
 <input type="checkbox" bind:checked={$parentTop} id="parentTopCheck"/>
 <label for="parentTopCheck">Subtasks list below task</label>
-<OneTodo bind:todo={data}
+<OneTodo todo={data}
         on:update={update}
 
 />
