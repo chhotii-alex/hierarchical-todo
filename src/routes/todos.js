@@ -6,14 +6,18 @@ export function setNextIdFromData(item) {
 }
 
 function biggestId(item) {
-    let biggest = nextId;
-    if (item.id > biggest) {
-        biggest = item.id;
-    }
-    for (let i = 0; i < item.children.length; ++i) {
-        let anId = biggestId(item.children[i])
-        if (anId > biggest) {
-            biggest = anId;
+    let biggest = nextId - 1;
+    if ('id' in item) {
+        if (item.id > biggest) {
+            biggest = item.id;
+        }
+        if (('children' in item) && ('length' in item.children)) {
+            for (let i = 0; i < item.children.length; ++i) {
+                let anId = biggestId(item.children[i])
+                if (anId > biggest) {
+                    biggest = anId;
+                }
+            }
         }
     }
     return biggest;

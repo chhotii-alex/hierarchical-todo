@@ -4,6 +4,21 @@
     import { parentTop } from "./stores.js";
 
     const isBrowser = typeof window !== "undefined";
+
+    /* Look at all the data persisted to localStorage;
+      start generating id's from the max of all id's used
+      for all lists. */
+    if (isBrowser) {
+        for (let i = 0; i < localStorage.length; i++) {
+            let key = localStorage.key(i);
+            let s = localStorage.getItem(key);
+            if (s) {
+                let aList = JSON.parse(s);
+                setNextIdFromData(aList);
+            }
+        }
+    }
+
     let key = "todo";
 
     function dataForKey(aKey) {
