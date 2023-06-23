@@ -117,7 +117,7 @@
   }
 
   function allowDrop(event) {
-      event.preventDefault();
+    event.preventDefault();
   }
 
   function drop(event) {
@@ -143,20 +143,30 @@
       event.preventDefault();
       let draggedParent = todos.parentOf(eve, dragged);
       let targetParent = todos.parentOf(eve, target);
-      draggedParent.children = draggedParent.children.filter( e => e != dragged);
-      targetParent.children.splice(targetParent.children.indexOf(target), 0, dragged);
+      draggedParent.children = draggedParent.children.filter(
+        (e) => e != dragged
+      );
+      targetParent.children.splice(
+        targetParent.children.indexOf(target),
+        0,
+        dragged
+      );
       modify();
     }
   }
-
 </script>
 
 <div class="todo" class:parent-top={$parentTop} class:child-top={!$parentTop}>
-  <div class="top" draggable="true" id={`tag${todo.id}`} on:dragstart={drag} 
-    on:dragover={allowDrop}  on:drop={drop}
+  <div
+    class="top"
+    draggable="true"
+    id={`tag${todo.id}`}
+    on:dragstart={drag}
+    on:dragover={allowDrop}
+    on:drop={drop}
   >
     {#if hasChildren}
-      <button on:click={() => (todo.expanded = !todo.expanded)}>
+      <button on:click={() => (todo.expanded = !todo.expanded)} class="noprint">
         {#if todo.expanded}
           V
         {:else}
@@ -183,7 +193,7 @@
       {/if}
     </button>
     <sup>{todo.id}</sup>
-    <span class="right_edge">
+    <span class="right_edge noprint">
       <button class:invisible={!hasCollapsedItems} on:click={() => expand()}>
         VVV
       </button>
@@ -206,19 +216,26 @@
         <div>
           <svelte:self
             todo={subtask}
-            eve={eve}
+            {eve}
             deleteFunc={removeTodoWithId}
             on:descendentExpandDelta={descendentExpandDelta}
             on:update={update}
             on:modify={modify}
           />
         </div>
+        <hr/>
       {/each}
     </div>
   </div>
 </div>
 
 <style>
+  @media only print {
+    .noprint {
+      display: none;
+    }
+  }
+
   .todo {
     width: 100%;
     display: grid;

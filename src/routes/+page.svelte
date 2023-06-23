@@ -79,18 +79,28 @@
 <hr />
 
 {#if allowUpload}
-    Upload List from File...
-    <input id="myfiles" type="file" accept=".json" bind:files />
-    {#if files}
-        <h2>Selected file:</h2>
-        {#each Array.from(files) as file}
-            <p>{file.name} ({file.size} bytes)</p>
-        {/each}
-        <button on:click={upload}> Upload Selected File </button>
-    {/if}
+    <div class="noprint">
+        Upload List from File...
+        <input id="myfiles" type="file" accept=".json" bind:files />
+        {#if files}
+            <h2>Selected file:</h2>
+            {#each Array.from(files) as file}
+                <p>{file.name} ({file.size} bytes)</p>
+            {/each}
+            <button on:click={upload}> Upload Selected File </button>
+        {/if}
+    </div>
 {:else}
     <input type="checkbox" bind:checked={$parentTop} id="parentTopCheck" />
     <label for="parentTopCheck">Subtasks list below task</label>
-    <OneTodo todo={data} eve={data} on:update={update} on:modify={modified}/>
-    <a href={url} download={`${key}.json`}> Download This List </a>
+    <OneTodo todo={data} eve={data} on:update={update} on:modify={modified} />
+    <a href={url} download={`${key}.json`} class="noprint" > Download This List </a>
 {/if}
+
+<style>
+    @media only print {
+        .noprint {
+            display: none;
+        }
+    }
+</style>
