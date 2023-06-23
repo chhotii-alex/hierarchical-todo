@@ -11,6 +11,7 @@
   import { currentEditID, parentTop } from "../stores.js";
 
   export let todo;
+  export let eve;
   export let deleteFunc = () => {};
 
   onMount(() => {
@@ -32,6 +33,10 @@
 
   function update() {
     dispatch("update");
+  }
+
+  function modify() {
+    dispatch("modify");
   }
 
   async function addChild() {
@@ -107,10 +112,49 @@
     removeTodo(subtask);
   }
 
+  function drag(event) {
+    event.dataTransfer.setData("text", event.target.id);
+  }
+
+  function allowDrop(event) {
+      event.preventDefault();
+  }
+
+  function drop(event) {
+    let draggedTag = event.dataTransfer.getData("text");
+    let target = event.target;
+    while (!target.id) {
+      target = target.parentNode;
+      if (!target) return;
+    }
+    let myTag = target.id;
+    if (draggedTag != myTag) {
+      let draggedId = draggedTag.substr(3);
+      let targetId = myTag.substr(3);
+      if (todos.directDescendentRelationship(eve, draggedId, targetId)) {
+        console.log("Cannot replace direct ancestor or descendent");
+        return;
+      }
+      let dragged = todos.itemWithId(eve, draggedId);
+      let target = todos.itemWithId(eve, targetId);
+      if (!(dragged && target)) {
+        return;
+      }
+      event.preventDefault();
+      let draggedParent = todos.parentOf(eve, dragged);
+      let targetParent = todos.parentOf(eve, target);
+      draggedParent.children = draggedParent.children.filter( e => e != dragged);
+      targetParent.children.splice(targetParent.children.indexOf(target), 0, dragged);
+      modify();
+    }
+  }
+
 </script>
 
 <div class="todo" class:parent-top={$parentTop} class:child-top={!$parentTop}>
-  <div class="top">
+  <div class="top" draggable="true" id={`tag${todo.id}`} on:dragstart={drag} 
+    on:dragover={allowDrop}  on:drop={drop}
+  >
     {#if hasChildren}
       <button on:click={() => (todo.expanded = !todo.expanded)}>
         {#if todo.expanded}
@@ -162,9 +206,11 @@
         <div>
           <svelte:self
             todo={subtask}
+            eve={eve}
             deleteFunc={removeTodoWithId}
             on:descendentExpandDelta={descendentExpandDelta}
             on:update={update}
+            on:modify={modify}
           />
         </div>
       {/each}

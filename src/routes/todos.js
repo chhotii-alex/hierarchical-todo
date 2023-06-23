@@ -127,3 +127,53 @@ export function hasCollapsedItems(theList) {
 export function hasExpandedItems(theList) {
     return hasItemsWithExpandedState(theList, true);
 }
+
+function hasDirectDescendent(node, id) {
+    for (let i = 0; i < node.children.length; ++i) {
+        let child = node.children[i];
+        if (child.id == id) return true;
+        if (hasDirectDescendent(child, id)) return true;
+    }
+    return false;
+}
+
+export function directDescendentRelationship(eve, a, b) {
+    if (a == eve.id) return true;
+    if (b == eve.id) return true;
+    for (let i = 0; i < eve.children.length; ++i) {
+        let node = eve.children[i];
+        if (node.id == a ) {
+            return hasDirectDescendent(node, b);
+        }
+        if (node.id == b) {
+            return hasDirectDescendent(node, a);
+        }
+        if (directDescendentRelationship(node, a, b)) return true;
+    }
+    return false;
+}
+
+export function itemWithId(eve, id) {
+    if (eve.id == id) {
+        return eve;
+    }
+    for (let i = 0; i < eve.children.length; ++i) {
+        let node = eve.children[i];
+        node = itemWithId(node, id);
+        if (node) {
+            return node;
+        }
+    }
+    return null;
+}
+
+export function parentOf(eve, item) {
+    if (eve == item) return null;
+    for (let i = 0; i < eve.children.length; ++i) {
+        let child = eve.children[i];
+        if (child == item) return eve;
+        let node = parentOf(child, item);
+        if (node) return node;
+    }
+    return null;
+}

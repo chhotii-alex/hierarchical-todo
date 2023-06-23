@@ -48,6 +48,10 @@
         }
     }
 
+    function modified() {
+        data = data;
+    }
+
     // File I/O
     let files;
     function upload() {
@@ -87,6 +91,6 @@
 {:else}
     <input type="checkbox" bind:checked={$parentTop} id="parentTopCheck" />
     <label for="parentTopCheck">Subtasks list below task</label>
-    <OneTodo todo={data} on:update={update} />
+    <OneTodo todo={data} eve={data} on:update={update} on:modify={modified}/>
     <a href={url} download={`${key}.json`}> Download This List </a>
 {/if}
