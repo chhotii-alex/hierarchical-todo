@@ -111,7 +111,9 @@
     <input type="checkbox" bind:checked={$showBlocked} id="showBlockedCheck" />
     <label for="showBlockedCheck">Show blocked items</label>
     <OneTodo todo={data} eve={data} on:update={update} on:modify={modified} />
-    <a href={url} download={`${key}.json`} class="noprint" > Download This List </a>
+    {#if !isEmpty(data)}
+      <a href={url} download={`${key}.json`} class="noprint" > Download This List </a>
+    {/if}
 {/if}
 
 <style>
