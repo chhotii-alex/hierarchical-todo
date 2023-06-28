@@ -33,6 +33,7 @@ function createNewItemForId(newTodoId) {
         name: "",
         expanded: true,
         children: createNewList(),
+        unblockDate: null,
     };
 }
 

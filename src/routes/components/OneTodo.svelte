@@ -8,7 +8,7 @@
   import { onMount } from "svelte";
 
   import * as todos from "../todos.js";
-  import { currentEditID, parentTop } from "../stores.js";
+  import { currentEditID, parentTop, showBlocked } from "../stores.js";
 
   export let todo;
   export let eve;
@@ -26,12 +26,50 @@
 
   let nameInput;
 
+  /* Rather than doing a bind:value on the input, update the
+  value in response to the changed event. This is because:
+  1) Otherwise the object attribute gets changed every time 
+  you scroll through the calendar months in Google Chrome;
+  this can cause things to disappear before you're done picking
+  a date.
+  2) I don't like how the logic in isBlocked is not memoized and thus
+  branches are visited over and over. Maybe do something clever here with a 
+  dirty flag?
+  */
+  async function updateBlock(event) {
+    todo.unblockDate = event.target.value;
+  }
+
+  function isBlocked(item) {
+   // console.log(item.name, "Doing isBlocked()");
+    let unblockDate = Date.parse(item.unblockDate + "T00:00:00");
+    const now = new Date();
+    if (unblockDate != null && unblockDate > now) {
+      return true;
+    }
+    /* If there are any children, and they are all blocked, we're blocked. */
+    /* If there's no children, not blocked. */
+    if (item.children.length == 0) {
+      return false;
+    }
+    let anyUnblockedChildren = false;
+    for (let i = 0; i < item.children.length; ++i) {
+      if (!isBlocked(item.children[i])) {
+        anyUnblockedChildren = true;
+      }
+    }
+    return !anyUnblockedChildren;
+  }
+
+  $: hidingBecauseBlocked = !$showBlocked && isBlocked(todo);
+
   $: {
     todo;
-    dispatch("update");
+    update();
   }
 
   function update() {
+    hidingBecauseBlocked = !$showBlocked && isBlocked(todo);
     dispatch("update");
   }
 
@@ -156,78 +194,85 @@
   }
 </script>
 
-<div class="todo" class:parent-top={$parentTop} class:child-top={!$parentTop}>
-  <div
-    class="top"
-    draggable="true"
-    id={`tag${todo.id}`}
-    on:dragstart={drag}
-    on:dragover={allowDrop}
-    on:drop={drop}
-  >
-    {#if hasChildren}
-      <button on:click={() => (todo.expanded = !todo.expanded)} class="noprint">
-        {#if todo.expanded}
-          V
+{#if !hidingBecauseBlocked}
+  <div class="todo" class:parent-top={$parentTop} class:child-top={!$parentTop}>
+    <div
+      class="top"
+      draggable="true"
+      id={`tag${todo.id}`}
+      on:dragstart={drag}
+      on:dragover={allowDrop}
+      on:drop={drop}
+    >
+      {#if hasChildren}
+        <button
+          on:click={() => (todo.expanded = !todo.expanded)}
+          class="noprint"
+        >
+          {#if todo.expanded}
+            V
+          {:else}
+            &gt;
+          {/if}
+        </button>
+      {/if}
+      <input
+        class:nondisplay={$currentEditID != todo.id}
+        size="80"
+        bind:value={todo.name}
+        bind:this={nameInput}
+        on:keypress={checkForEnterKey}
+      />
+      <button
+        class:nondisplay={$currentEditID == todo.id}
+        class="plain"
+        on:click={startEditing}
+      >
+        {#if todo.name.length}
+          {todo.name}
         {:else}
-          &gt;
+          ---
         {/if}
       </button>
-    {/if}
-    <input
-      class:nondisplay={$currentEditID != todo.id}
-      size="80"
-      bind:value={todo.name}
-      bind:this={nameInput}
-      on:keypress={checkForEnterKey}
-    />
-    <button
-      class:nondisplay={$currentEditID == todo.id}
-      class="plain"
-      on:click={startEditing}
-    >
-      {#if todo.name.length}
-        {todo.name}
-      {:else}
-        ---
-      {/if}
-    </button>
-    <sup>{todo.id}</sup>
-    <span class="right_edge noprint">
-      <button class:invisible={!hasCollapsedItems} on:click={() => expand()}>
-        VVV
-      </button>
-      <button class:invisible={!hasExpandedItems} on:click={() => collapse()}>
-        &gt;&gt;&gt;
-      </button>
-      <button on:click={() => addChild()}>+</button>
-      <button
-        class:invisible={todo.children.length > 0}
-        type="button"
-        on:click={() => deleteFunc(todo.id)}
-      >
-        X
-      </button>
-    </span>
-  </div>
-  <div class="boxed" class:nondisplay={!hasChildren || !expanded}>
-    <div>
-      {#each todo.children as subtask (subtask.id)}
-        <div>
-          <svelte:self
-            todo={subtask}
-            {eve}
-            deleteFunc={removeTodoWithId}
-            on:descendentExpandDelta={descendentExpandDelta}
-            on:update={update}
-            on:modify={modify}
-          />
-        </div>
-        <hr/>
-      {/each}
+      <sup>{todo.id}</sup>
+      <span class="right_edge noprint">
+        <button class:invisible={!hasCollapsedItems} on:click={() => expand()}>
+          VVV
+        </button>
+        <button class:invisible={!hasExpandedItems} on:click={() => collapse()}>
+          &gt;&gt;&gt;
+        </button>
+        <button on:click={() => addChild()}>+</button>
+        <button
+          class:invisible={todo.children.length > 0}
+          type="button"
+          on:click={() => deleteFunc(todo.id)}
+        >
+          X
+        </button>
+        Block until:
+        <input type="date" value={todo.unblockDate || null} on:change={updateBlock}/>
+      </span>
+    </div>
+    <div class="boxed" class:nondisplay={!hasChildren || !expanded}>
+      <div>
+        {#each todo.children as subtask (subtask.id)}
+          <div>
+            <svelte:self
+              todo={subtask}
+              {eve}
+              deleteFunc={removeTodoWithId}
+              on:descendentExpandDelta={descendentExpandDelta}
+              on:update={update}
+              on:modify={modify}
+            />
+          </div>
+        {/each}
+      </div>
     </div>
   </div>
-</div>
+  <hr />
+{/if}
 
 <style>
   @media only print {

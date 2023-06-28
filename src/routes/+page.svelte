@@ -1,7 +1,7 @@
 <script>
     import OneTodo from "./components/OneTodo.svelte";
     import { createNewItem, setNextIdFromData } from "./todos.js";
-    import { parentTop } from "./stores.js";
+    import { parentTop, showBlocked } from "./stores.js";
 
     const isBrowser = typeof window !== "undefined";
 
@@ -42,12 +42,27 @@
         data = dataForKey(key);
     }
 
+    /*
+      Event handler for the "update" event, which is dispatched when
+      any task in the tree updates any attribute. 
+      Causes the whole data structure to be saved.
+     */
     function update() {
         if (isBrowser) {
             localStorage.setItem(key, JSON.stringify(data));
         }
     }
 
+    /*
+       Event handler for "modify" event, which is dispatched on the
+       completion of a drag-and-drop rearrangement. 
+       Causes EVERYTHING to be re-rendered.
+       TODO: this can be way more re-rendering that is needed;
+       calculate the most recent common ancenstor of the drag
+       source and drag sink, and just re-render from that point down? 
+       See https://svelte.dev/repl/053c93e397ab4ccd8921d2beca238ffe?version=3.29.4
+       for attaching parameters to events.
+    */
     function modified() {
         data = data;
     }
@@ -93,6 +108,8 @@
 {:else}
     <input type="checkbox" bind:checked={$parentTop} id="parentTopCheck" />
     <label for="parentTopCheck">Subtasks list below task</label>
+    <input type="checkbox" bind:checked={$showBlocked} id="showBlockedCheck" />
+    <label for="showBlockedCheck">Show blocked items</label>
     <OneTodo todo={data} eve={data} on:update={update} on:modify={modified} />
     <a href={url} download={`${key}.json`} class="noprint" > Download This List </a>
 {/if}
