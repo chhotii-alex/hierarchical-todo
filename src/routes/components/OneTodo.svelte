@@ -1,5 +1,6 @@
 <script context="module">
   const nameInputs = new Map();
+  let isBlockedCache = new Map();
 </script>
 
 <script>
@@ -37,11 +38,22 @@
   dirty flag?
   */
   async function updateBlock(event) {
+    isBlockedCache = new Map(); // throw away all the memoization
     todo.unblockDate = event.target.value;
   }
 
-  function isBlocked(item) {
-   // console.log(item.name, "Doing isBlocked()");
+  function isBlocked(item, _ = 0) {
+    if (!isBlockedCache.has(item.id)) {
+      isBlockedCache.set(item.id, calcIsBlocked(item));
+    }
+    return isBlockedCache.get(item.id);
+  }
+
+  /*
+    TODO: Blocking decision should be re-visited when midnight
+    rolls around. TImer? 
+  */
+  function calcIsBlocked(item) {
     let unblockDate = Date.parse(item.unblockDate + "T00:00:00");
     const now = new Date();
     if (unblockDate != null && unblockDate > now) {
@@ -61,7 +73,8 @@
     return !anyUnblockedChildren;
   }
 
-  $: hidingBecauseBlocked = !$showBlocked && isBlocked(todo);
+  let tickleBlockUpdate = 0;
+  $: hidingBecauseBlocked = !$showBlocked && isBlocked(todo, tickleBlockUpdate);
 
   $: {
     todo;
@@ -69,8 +82,8 @@
   }
 
   function update() {
-    hidingBecauseBlocked = !$showBlocked && isBlocked(todo);
     dispatch("update");
+    tickleBlockUpdate += 1;
   }
 
   function modify() {
@@ -251,7 +264,11 @@
           X
         </button>
         Block until:
-        <input type="date" value={todo.unblockDate || null} on:change={updateBlock}/>
+        <input
+          type="date"
+          value={todo.unblockDate || null}
+          on:change={updateBlock}
+        />
       </span>
     </div>
     <div class="boxed" class:nondisplay={!hasChildren || !expanded}>
