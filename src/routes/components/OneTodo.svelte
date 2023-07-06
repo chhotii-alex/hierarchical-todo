@@ -1,6 +1,6 @@
 <script context="module">
   const nameInputs = new Map();
-  let isBlockedCache = new Map();
+  export let isBlockedCache = new Map();
 </script>
 
 <script>
@@ -38,7 +38,7 @@
   dirty flag?
   */
   async function updateBlock(event) {
-    isBlockedCache = new Map(); // throw away all the memoization
+    isBlockedCache.clear(); // throw away all the memoization
     todo.unblockDate = event.target.value;
   }
 

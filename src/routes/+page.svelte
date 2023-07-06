@@ -1,5 +1,6 @@
 <script>
-    import OneTodo from "./components/OneTodo.svelte";
+    import { onMount, onDestroy } from 'svelte';
+    import OneTodo, { isBlockedCache } from "./components/OneTodo.svelte";
     import { createNewItem, setNextIdFromData } from "./todos.js";
     import { parentTop, showBlocked } from "./stores.js";
 
@@ -18,6 +19,34 @@
             }
         }
     }
+
+    let timeout;
+
+    function blockReset() {
+        isBlockedCache.clear();
+        data = data;
+        timeout = scheduleBlockReset();
+    }
+
+    function scheduleBlockReset() {
+        let now = new Date();
+        let tomorrow = now.getTime() + 24*60*60*1000;
+        let midnight = new Date();
+        midnight.setTime(tomorrow);
+        midnight.setHours(0, 0, 0 ,0);
+        let millis = midnight.getTime() - now.getTime();
+        if (millis < 1) {
+            millis = 1;
+        }
+        return setTimeout(blockReset, millis);
+    }
+
+    onMount( () => {
+        scheduleBlockReset();
+    });
+    onDestroy( () => {
+        clearTimeout(timeout);
+    });
 
     let key = "todo";
 
