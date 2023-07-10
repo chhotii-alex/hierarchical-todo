@@ -2,7 +2,12 @@
 let nextId = 1;
 
 export function setNextIdFromData(item) {
-    nextId = biggestId(item) + 1;
+    try {
+        nextId = biggestId(item) + 1;
+    }
+    catch (e) {
+        nextId = 1;
+    }
 }
 
 function biggestId(item) {
