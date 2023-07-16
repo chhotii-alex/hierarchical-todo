@@ -1,5 +1,5 @@
 <script>
-    import { onMount, onDestroy } from 'svelte';
+    import { onMount, onDestroy, tick } from "svelte";
     import OneTodo, { isBlockedCache } from "./components/OneTodo.svelte";
     import { createNewItem, setNextIdFromData } from "./todos.js";
     import { parentTop, showBlocked } from "./stores.js";
@@ -8,7 +8,8 @@
 
     /* Look at all the data persisted to localStorage;
       start generating id's from the max of all id's used
-      for all lists. */
+      for all lists. 
+      TODO remove as unnecessary? */
     if (isBrowser) {
         for (let i = 0; i < localStorage.length; i++) {
             let key = localStorage.key(i);
@@ -23,28 +24,66 @@
     let timeout;
 
     function blockReset() {
-        isBlockedCache.clear();
-        data = data;
-        timeout = scheduleBlockReset();
+        blockResetImpl(data);
     }
 
-    function scheduleBlockReset() {
-        let now = new Date();
-        let tomorrow = now.getTime() + 24*60*60*1000;
+    function blockResetImpl(maybeNewData) {
+        isBlockedCache.clear();
+        data = maybeNewData;
+        scheduleBlockReset();
+    }
+
+    function getMidnightTonight(now) {
+        let tomorrow = now.getTime() + 24 * 60 * 60 * 1000;
         let midnight = new Date();
         midnight.setTime(tomorrow);
-        midnight.setHours(0, 0, 0 ,0);
-        let millis = midnight.getTime() - now.getTime();
+        midnight.setHours(0, 0, 0, 0);
+        return midnight;
+    }
+
+    function findSoonestPuntExpiration(item) {
+        let when = null;
+        let now = new Date().getTime();
+        if (item.puntUntilWhen) {
+            let punt = Date.parse(item.puntUntilWhen);
+            if (punt >= now) {
+                when = punt;
+            }
+        }
+        for (let i = 0; i < item.children.length; ++i) {
+            let childWhen = findSoonestPuntExpiration(item.children[i]);
+            if (childWhen && (!when || childWhen < when)) {
+                when = childWhen;
+            }
+        }
+        return when;
+    }
+
+    async function scheduleBlockReset() {
+        if (timeout) {
+            clearTimeout(timeout);
+            timeout = null;
+        }
+        await tick();
+        let now = new Date();
+        let unblockCheckWhen = getMidnightTonight(now).getTime();
+        let soonestPuntExpiration = findSoonestPuntExpiration(data);
+        if (soonestPuntExpiration != null) {
+            if (soonestPuntExpiration < unblockCheckWhen) {
+                unblockCheckWhen = soonestPuntExpiration;
+            }
+        }
+        let millis = unblockCheckWhen - now.getTime();
         if (millis < 1) {
             millis = 1;
         }
-        return setTimeout(blockReset, millis);
+        timeout = setTimeout(blockReset, millis);
     }
 
-    onMount( () => {
+    onMount(() => {
         scheduleBlockReset();
     });
-    onDestroy( () => {
+    onDestroy(() => {
         clearTimeout(timeout);
     });
 
@@ -53,7 +92,7 @@
     function dataForKey(aKey) {
         let aList;
         if (isBrowser && localStorage.getItem(aKey)) {
-            aList = JSON.parse(localStorage.getItem(aKey));
+            aList = stringToData(localStorage.getItem(aKey));
             setNextIdFromData(aList);
         } else {
             aList = createNewItem();
@@ -68,7 +107,21 @@
     let data;
     $: allowUpload = key.length < 1;
     $: {
-        data = dataForKey(key);
+        blockResetImpl(dataForKey(key));
+    }
+
+    function dataToString(obj) {
+        let keys = ["name", "id", "unblockDate", "children"];
+        return JSON.stringify(obj, keys, 2);
+    }
+
+    function reviver(key, value) {
+        this.expanded = true;
+        return value;
+    }
+
+    function stringToData(s) {
+        return JSON.parse(s, reviver);
     }
 
     /*
@@ -78,8 +131,10 @@
      */
     function update() {
         if (isBrowser) {
-            localStorage.setItem(key, JSON.stringify(data));
+            dataToString(data);
+            localStorage.setItem(key, dataToString(data));
         }
+        scheduleBlockReset();
     }
 
     /*
@@ -94,6 +149,7 @@
     */
     function modified() {
         data = data;
+        update();
     }
 
     // File I/O
@@ -112,7 +168,7 @@
     $: url = makeDownloadURL(data);
 
     function makeDownloadURL(data) {
-        const blob = new Blob([JSON.stringify(data, null, 2)], {
+        const blob = new Blob([dataToString(data)], {
             type: "application/json",
         });
         return URL.createObjectURL(blob);
@@ -141,7 +197,9 @@
     <label for="showBlockedCheck">Show blocked items</label>
     <OneTodo todo={data} eve={data} on:update={update} on:modify={modified} />
     {#if !isEmpty(data)}
-      <a href={url} download={`${key}.json`} class="noprint" > Download This List </a>
+        <a href={url} download={`${key}.json`} class="noprint">
+            Download This List
+        </a>
     {/if}
 {/if}
 

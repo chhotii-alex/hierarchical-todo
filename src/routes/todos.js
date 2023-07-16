@@ -39,6 +39,7 @@ function createNewItemForId(newTodoId) {
         expanded: true,
         children: createNewList(),
         unblockDate: null,
+        puntUntilWhen: null,
     };
 }
 
@@ -65,7 +66,7 @@ export function hasChildren(item) {
     return (item.children.length > 0);
 }
 
-export function removeItemFromList(item, theList) {
+function removeItemFromList(item, theList) {
     let index = theList.indexOf(item);
     if (index !== -1) {
         theList.splice(index, 1);
@@ -148,7 +149,7 @@ export function directDescendentRelationship(eve, a, b) {
     if (b == eve.id) return true;
     for (let i = 0; i < eve.children.length; ++i) {
         let node = eve.children[i];
-        if (node.id == a ) {
+        if (node.id == a) {
             return hasDirectDescendent(node, b);
         }
         if (node.id == b) {

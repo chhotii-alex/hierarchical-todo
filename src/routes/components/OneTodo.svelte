@@ -40,6 +40,7 @@
   async function updateBlock(event) {
     isBlockedCache.clear(); // throw away all the memoization
     todo.unblockDate = event.target.value;
+    update();
   }
 
   function isBlocked(item, _ = 0) {
@@ -49,15 +50,29 @@
     return isBlockedCache.get(item.id);
   }
 
+  function punt() {
+    let now = Date.now();
+    let later = now + 1000*60*60*3; // three hours
+    later = new Date(later);
+    later = later.toISOString();  // N.B. that this will be in UTC
+    isBlockedCache.clear(); // throw away all the memoization
+    todo.puntUntilWhen = later;
+    update();
+  }
+
   /*
-    TODO: Blocking decision should be re-visited when midnight
-    rolls around. TImer? 
+    Blocking decision is re-visited when timeout (at midnight,
+    or sooner if things are temporarily punted).
   */
   function calcIsBlocked(item) {
-    let unblockDate = Date.parse(item.unblockDate + "T00:00:00");
     const now = new Date();
-    if (unblockDate != null && unblockDate > now) {
-      return true;
+    let unblockDate = Date.parse(item.unblockDate + "T00:00:00");
+    let puntDate = Date.parse(item.puntUntilWhen);
+    let blockDates = [unblockDate, puntDate];
+    for (let i = 0; i < blockDates.length; ++i) {
+      if (blockDates[i] != null && blockDates[i] > now) {
+        return true;
+      }
     }
     /* If there are any children, and they are all blocked, we're blocked. */
     /* If there's no children, not blocked. */
@@ -76,11 +91,6 @@
   let tickleBlockUpdate = 0;
   $: hidingBecauseBlocked = !$showBlocked && isBlocked(todo, tickleBlockUpdate);
 
-  $: {
-    todo;
-    update();
-  }
-
   function update() {
     dispatch("update");
     tickleBlockUpdate += 1;
@@ -94,7 +104,7 @@
     let newID = todos.addNewItem(todo.children);
     $currentEditID = newID;
     todo.expanded = true;
-    todo.children = todo.children;
+    update();
     await editableGrabFocus();
   }
 
@@ -154,8 +164,9 @@
   }
 
   function removeTodo(subtask) {
-    todos.removeItemFromList(subtask, todo.children);
+    todos.removeChild(subtask, todo);
     todo.children = todo.children;
+    update();
   }
 
   function removeTodoWithId(id) {
@@ -235,6 +246,7 @@
         bind:value={todo.name}
         bind:this={nameInput}
         on:keypress={checkForEnterKey}
+        on:change={update}
       />
       <button
         class:nondisplay={$currentEditID == todo.id}
@@ -269,6 +281,7 @@
           value={todo.unblockDate || null}
           on:change={updateBlock}
         />
+        <button on:click={() => punt()}> punt </button>
       </span>
     </div>
     <div class="boxed" class:nondisplay={!hasChildren || !expanded}>
