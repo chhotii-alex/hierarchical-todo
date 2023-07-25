@@ -40,6 +40,7 @@ function createNewItemForId(newTodoId) {
         children: createNewList(),
         unblockDate: null,
         puntUntilWhen: null,
+        tags: [],
     };
 }
 

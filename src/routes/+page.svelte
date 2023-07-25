@@ -21,6 +21,25 @@
         }
     }
 
+    function tagSetFromTodo(todo) {
+        let s = new Set();
+        if (todo.tags) {
+            for (let i = 0; i < todo.tags.length; ++i) {
+                s.add(todo.tags[i]);
+            }
+        }
+        for (let i = 0; i < todo.children.length; ++i) {
+            for (const tag of tagSetFromTodo(todo.children[i]).values()) {
+                s.add(tag);
+            }
+        }
+        return s;
+    }
+
+    function tagsFromData(todo) {
+        return [...tagSetFromTodo(todo)];
+    }
+
     let timeout;
 
     function blockReset() {
@@ -28,6 +47,7 @@
     }
 
     function blockResetImpl(maybeNewData) {
+        tags = tagsFromData(maybeNewData);
         isBlockedCache.clear();
         data = maybeNewData;
         scheduleBlockReset();
@@ -110,8 +130,28 @@
         blockResetImpl(dataForKey(key));
     }
 
+    let tags = [ ];
+    let newTagName = "";
+
+    function tagKeypress(event) {
+        if (event.key === "Enter") {
+            if (newTagName.length > 0) {
+                tags.push(newTagName);
+                tags = tags;
+            }
+            event.preventDefault();
+            event.target.blur();
+            newTagName = "";
+        }
+    }
+
+    function dragTag(event) {
+        event.dataTransfer.setData("text", event.target.innerText);
+        event.dataTransfer.setData("type", "tag");
+    }
+
     function dataToString(obj) {
-        let keys = ["name", "id", "unblockDate", "children"];
+        let keys = ["name", "id", "unblockDate", "children", "tags"];
         return JSON.stringify(obj, keys, 2);
     }
 
@@ -178,6 +218,15 @@
 <input bind:value={key} />
 <hr />
 
+{#each tags as tag}
+    <span class="tag" draggable="true" on:dragstart={dragTag}>
+        {tag}
+    </span>
+{/each}
+<input bind:value={newTagName} on:keypress={tagKeypress} />
+
+<hr />
+
 {#if allowUpload}
     <div class="noprint">
         Upload List from File...
@@ -204,6 +253,13 @@
 {/if}
 
 <style>
+    span.tag {
+        padding: 0px 0.5em;
+        margin: 0px 1em;
+        border-style: solid;
+        border-width: 0.5px;
+        border-radius: 4px;
+    }
     @media only print {
         .noprint {
             display: none;

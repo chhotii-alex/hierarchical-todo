@@ -52,9 +52,9 @@
 
   function punt() {
     let now = Date.now();
-    let later = now + 1000*60*60*3; // three hours
+    let later = now + 1000 * 60 * 60 * 3; // three hours
     later = new Date(later);
-    later = later.toISOString();  // N.B. that this will be in UTC
+    later = later.toISOString(); // N.B. that this will be in UTC
     isBlockedCache.clear(); // throw away all the memoization
     todo.puntUntilWhen = later;
     update();
@@ -176,6 +176,7 @@
 
   function drag(event) {
     event.dataTransfer.setData("text", event.target.id);
+    event.dataTransfer.setData("type", "todo");
   }
 
   function allowDrop(event) {
@@ -183,33 +184,54 @@
   }
 
   function drop(event) {
-    let draggedTag = event.dataTransfer.getData("text");
+    let type = event.dataTransfer.getData("type");
     let target = event.target;
     while (!target.id) {
       target = target.parentNode;
       if (!target) return;
     }
-    let myTag = target.id;
-    if (draggedTag != myTag) {
-      let draggedId = draggedTag.substr(3);
-      let targetId = myTag.substr(3);
-      if (todos.directDescendentRelationship(eve, draggedId, targetId)) {
+    let myDomId = target.id;
+    if (type == "tag") {
+      dropTag(event);
+    } else {
+      dropTodo(event, myDomId);
+    }
+  }
+
+  function dropTag(event) {
+    let tag = event.dataTransfer.getData("text");
+    if (!todo.tags) {
+      todo.tags = [tag];
+    } else {
+      if (todo.tags.indexOf(tag) >= 0) {
+        //already in list
+        return;
+      }
+      todo.tags = [...todo.tags, tag];
+    }
+    update();
+  }
+
+  function dropTodo(event, myDomId) {
+    let draggedDomId = event.dataTransfer.getData("text");
+    if (draggedDomId != myDomId) {
+      let draggedId = draggedDomId.substr(3);
+      if (todos.directDescendentRelationship(eve, draggedId, todo.id)) {
         console.log("Cannot replace direct ancestor or descendent");
         return;
       }
       let dragged = todos.itemWithId(eve, draggedId);
-      let target = todos.itemWithId(eve, targetId);
-      if (!(dragged && target)) {
+      if (!dragged) {
         return;
       }
       event.preventDefault();
       let draggedParent = todos.parentOf(eve, dragged);
-      let targetParent = todos.parentOf(eve, target);
+      let targetParent = todos.parentOf(eve, todo);
       draggedParent.children = draggedParent.children.filter(
         (e) => e != dragged
       );
       targetParent.children.splice(
-        targetParent.children.indexOf(target),
+        targetParent.children.indexOf(todo),
         0,
         dragged
       );
@@ -223,7 +245,7 @@
     <div
       class="top"
       draggable="true"
-      id={`tag${todo.id}`}
+      id={`id_${todo.id}`}
       on:dragstart={drag}
       on:dragover={allowDrop}
       on:drop={drop}
@@ -260,6 +282,13 @@
         {/if}
       </button>
       <sup>{todo.id}</sup>
+      {#if todo.tags}
+        {#each todo.tags as tag}
+          <span class="tag">
+            {tag}
+          </span>
+        {/each}
+      {/if}
       <span class="right_edge noprint">
         <button class:invisible={!hasCollapsedItems} on:click={() => expand()}>
           VVV
@@ -368,4 +397,12 @@
   .right_edge {
     float: right;
   }
+
+  span.tag {
+        padding: 0px 0.5em;
+        margin: 0px 0.25em;
+        border-style: solid;
+        border-width: 0.5px;
+        border-radius: 4px;
+    }
 </style>
